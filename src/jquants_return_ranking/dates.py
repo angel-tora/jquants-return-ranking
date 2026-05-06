@@ -4,14 +4,21 @@ from datetime import date, datetime, timedelta, timezone
 
 try:
     from zoneinfo import ZoneInfo
+    from zoneinfo import ZoneInfoNotFoundError
 except ImportError:  # pragma: no cover
     ZoneInfo = None
+    ZoneInfoNotFoundError = None
+
+JST = timezone(timedelta(hours=9))
 
 
 def today_jst() -> date:
     if ZoneInfo is not None:
-        return datetime.now(tz=ZoneInfo("Asia/Tokyo")).date()
-    return datetime.now(tz=timezone(timedelta(hours=9))).date()
+        try:
+            return datetime.now(tz=ZoneInfo("Asia/Tokyo")).date()
+        except ZoneInfoNotFoundError:
+            pass
+    return datetime.now(tz=JST).date()
 
 
 def parse_date(value: str) -> date:

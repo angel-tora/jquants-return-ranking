@@ -17,6 +17,11 @@ Prices are calculated with adjusted close (`AdjC`) so stock splits are handled m
 
 ## Install
 
+Requirements:
+
+- Python 3.11 or newer
+- A J-Quants API key
+
 From GitHub:
 
 ```bash
@@ -31,6 +36,40 @@ cd jquants-return-ranking
 python -m venv .venv
 . .venv/bin/activate
 pip install -e .
+```
+
+Windows PowerShell:
+
+```powershell
+git clone https://github.com/angel-tora/jquants-return-ranking.git
+cd jquants-return-ranking
+py -3.11 -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install -e .
+jrr
+```
+
+Windows cmd.exe:
+
+```bat
+git clone https://github.com/angel-tora/jquants-return-ranking.git
+cd jquants-return-ranking
+py -3.11 -m venv .venv
+.\.venv\Scripts\activate.bat
+python -m pip install -e .
+jrr
+```
+
+If `py -3.11` is not available on Windows, use the full Python 3.11 path:
+
+```bat
+C:\Users\<UserName>\AppData\Local\Programs\Python\Python311\python.exe -m venv .venv
+```
+
+If the virtual environment is not activated, run the command by path:
+
+```powershell
+.\.venv\Scripts\jrr.exe
 ```
 
 ## Usage
