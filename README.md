@@ -17,13 +17,17 @@ Prices are calculated with adjusted close (`AdjC`) so stock splits are handled m
 
 ## Install
 
+From GitHub:
+
 ```bash
-pipx install jquants-return-ranking
+pipx install git+https://github.com/<your-name>/jquants-return-ranking.git
 ```
 
 Local development:
 
 ```bash
+git clone https://github.com/<your-name>/jquants-return-ranking.git
+cd jquants-return-ranking
 python -m venv .venv
 . .venv/bin/activate
 pip install -e .
