@@ -18,7 +18,7 @@ def row() -> RankingRow:
         base_date=date(2026, 5, 1),
         comparison_date=date(2025, 4, 30),
         rank=1,
-        code="11110",
+        code="1111",
         company_name="テスト",
         market="プライム",
         start_close=100.0,
@@ -49,7 +49,7 @@ class OutputTests(unittest.TestCase):
                 rows = list(reader)
 
         self.assertEqual(reader.fieldnames, CSV_COLUMNS)
-        self.assertEqual(rows[0]["Code"], "11110")
+        self.assertEqual(rows[0]["Code"], "1111")
         self.assertEqual(rows[0]["PriceChange"], "50.0")
 
 

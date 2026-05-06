@@ -48,7 +48,7 @@ class RankingTests(unittest.TestCase):
             top_n=50,
         )
 
-        self.assertEqual([row.code for row in rows], ["11110", "22220"])
+        self.assertEqual([row.code for row in rows], ["1111", "2222"])
         self.assertEqual(rows[0].company_name, "Alpha")
         self.assertEqual(rows[0].market, "プライム")
         self.assertAlmostEqual(rows[0].price_change, 50.0)
@@ -70,8 +70,14 @@ class RankingTests(unittest.TestCase):
             top_n=2,
         )
 
-        self.assertEqual([row.code for row in rows], ["33330", "11110"])
+        self.assertEqual([row.code for row in rows], ["3333", "1111"])
         self.assertEqual([row.rank for row in rows], [1, 2])
+
+    def test_display_code_removes_only_fifth_trailing_zero(self):
+        self.assertEqual(ranking.display_code("11110"), "1111")
+        self.assertEqual(ranking.display_code("13010"), "1301")
+        self.assertEqual(ranking.display_code("12345"), "12345")
+        self.assertEqual(ranking.display_code("999"), "999")
 
     def test_build_adjc_map_skips_missing_and_non_positive(self):
         prices = ranking.build_adjc_map(

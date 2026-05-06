@@ -55,6 +55,13 @@ def build_master_map(rows: list[dict]) -> dict[str, dict]:
     return {str(row.get("Code", "")): row for row in rows if row.get("Code")}
 
 
+def display_code(code: str) -> str:
+    code = str(code)
+    if len(code) == 5 and code.endswith("0"):
+        return code[:-1]
+    return code
+
+
 def coerce_positive_float(value: object) -> float | None:
     if value in ("", None):
         return None
@@ -102,7 +109,7 @@ def compute_ranking_rows(
             base_date=base_date,
             comparison_date=comparison_date,
             rank=index,
-            code=str(row["code"]),
+            code=display_code(str(row["code"])),
             company_name=str(row["company_name"]),
             market=str(row["market"]),
             start_close=float(row["start_close"]),
