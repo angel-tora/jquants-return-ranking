@@ -1,8 +1,8 @@
 # jquants-return-ranking
 
-`jrr` shows the top 50 Japanese stocks by one-year price return using J-Quants v2 data.
+`jrr` は、J-Quants v2 の株価データを使って、日本株の過去1年の株価上昇率ランキング上位50件を表示するCLI/TUIツールです。
 
-The default output is a Japanese terminal table with:
+標準の出力項目は以下です。
 
 - 順位
 - コード
@@ -13,22 +13,22 @@ The default output is a Japanese terminal table with:
 - 上昇額
 - 上昇率%
 
-Prices are calculated with adjusted close (`AdjC`) so stock splits are handled more naturally.
+株価は調整後終値 `AdjC` を使って計算します。株式分割などの影響をある程度自然に扱うためです。
 
-## Install
+## インストール
 
-Requirements:
+必要なもの:
 
-- Python 3.11 or newer
-- A J-Quants API key
+- Python 3.11以上
+- J-Quants APIキー
 
-From GitHub:
+GitHubからインストールする場合:
 
 ```bash
 pipx install git+https://github.com/angel-tora/jquants-return-ranking.git
 ```
 
-Local development:
+ローカル開発用:
 
 ```bash
 git clone https://github.com/angel-tora/jquants-return-ranking.git
@@ -49,7 +49,7 @@ python -m pip install -e .
 jrr
 ```
 
-`git clone` only downloads the source code. Install the package with `python -m pip install -e .` before running `jrr`.
+`git clone` はソースコードを取得するだけです。`jrr` を実行する前に、`python -m pip install -e .` でパッケージをインストールしてください。
 
 Windows cmd.exe:
 
@@ -62,37 +62,37 @@ python -m pip install -e .
 jrr
 ```
 
-If `py -3.11` is not available on Windows, use the full Python 3.11 path:
+Windowsで `py -3.11` が使えない場合は、Python 3.11のフルパスを指定してください。
 
 ```bat
 C:\Users\<UserName>\AppData\Local\Programs\Python\Python311\python.exe -m venv .venv
 ```
 
-If the virtual environment is not activated, run the command by path:
+仮想環境を有効化していない場合は、以下のように直接実行できます。
 
 ```powershell
 .\.venv\Scripts\jrr.exe
 ```
 
-## Usage
+## 使い方
 
 ```bash
 jrr
 ```
 
-`jrr` opens the TUI. Enter a date and Top count, then fetch the ranking.
-If no API key is configured, enter it in the TUI and authenticate it first.
-The TUI uses the key only for the current session and does not save it.
-The date field starts at 12 weeks before today for free-plan compatibility.
+引数なしで `jrr` を実行するとTUIが起動します。指定日とTop数を入力してランキングを取得します。
+APIキーが設定されていない場合は、TUI上でAPIキーを入力して認証してください。
+TUIで入力したAPIキーは現在のセッション内だけで使われ、保存されません。
+日付欄の初期値は、J-Quantsの無料プランでも動きやすいように「今日から12週間前」です。
 
-For one-shot terminal output:
+一度だけターミナルに出力する場合:
 
 ```bash
 jrr rank --date 2026-05-01
 ```
 
-If an API key is not found, `jrr` asks for it in the terminal without echoing.
-The key is not saved unless you explicitly request it.
+APIキーが見つからない場合、`jrr` はターミナルでAPIキー入力を求めます。入力内容は表示されません。
+明示的に保存を指定しない限り、APIキーは保存されません。
 
 ```bash
 jrr rank --date 2026-05-01 --save-api-key
@@ -100,33 +100,32 @@ jrr config set-api-key
 jrr config show
 ```
 
-Save CSV only when needed:
+CSV保存が必要な場合:
 
 ```bash
 jrr rank --date 2026-05-01 --output ranking.csv
 ```
 
-## API Key
+## APIキー
 
-Lookup order:
+APIキーは以下の順番で探します。
 
 1. `JQUANTS_API_KEY`
-2. saved config file
-3. hidden terminal prompt
+2. 保存済みの設定ファイル
+3. ターミナルでの非表示入力
 
-The saved config file lives in the OS-standard config directory for
-`jquants-return-ranking`.
+保存済みの設定ファイルは、OS標準の設定ディレクトリ配下の `jquants-return-ranking` に置かれます。
 
-Security notes:
+セキュリティ上の注意:
 
-- Do not paste real API keys into GitHub issues, screenshots, logs, or test fixtures.
-- TUI key input is session-only and is not written to disk.
-- `jrr config set-api-key` and `jrr rank --save-api-key` intentionally write a local config file. Use `JQUANTS_API_KEY` instead if you do not want a saved file.
-- Saved config files are written with user-only permissions where the OS supports it.
+- 実際のAPIキーをGitHub Issue、スクリーンショット、ログ、テストデータに貼らないでください。
+- TUIで入力したAPIキーは保存されません。
+- `jrr config set-api-key` と `jrr rank --save-api-key` は、意図的にローカル設定ファイルへAPIキーを保存します。保存したくない場合は `JQUANTS_API_KEY` を使ってください。
+- OSが対応している場合、保存済み設定ファイルはユーザー本人だけが読める権限で作成します。
 
-## Notes
+## 注意事項
 
-- This tool uses J-Quants v2 endpoints.
-- Market data is fetched on the user's machine with the user's own API key.
-- No real market data is bundled in this repository.
-- This is not investment advice.
+- このツールはJ-Quants v2エンドポイントを使います。
+- 市場データはユーザー自身のPC上で、ユーザー自身のAPIキーを使って取得します。
+- このリポジトリには実データを同梱しません。
+- このツールは投資助言ではありません。
