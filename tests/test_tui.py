@@ -21,6 +21,14 @@ class TuiTests(unittest.TestCase):
         self.assertIn("api-key-panel", source)
         self.assertIn("validate-key", source)
 
+    def test_tui_source_uses_default_date_without_date_buttons(self):
+        with open(tui.__file__, encoding="utf-8") as handle:
+            source = handle.read()
+
+        self.assertIn("default_free_plan_date", source)
+        self.assertNotIn("date-month-minus", source)
+        self.assertNotIn("date-day-minus", source)
+
 
 if __name__ == "__main__":
     unittest.main()

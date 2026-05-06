@@ -3,7 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from .config import load_api_key
-from .dates import parse_date
+from .dates import default_free_plan_date, parse_date
 from .jquants import build_clients, validate_api_key
 from .output import write_csv
 from .ranking import DEFAULT_LOOKBACK_DAYS, DEFAULT_MAX_SEARCH_DAYS, DEFAULT_TOP_N, RankingRow, collect_ranking
@@ -40,6 +40,7 @@ def run_tui() -> int:
             self.api_key_source = "missing"
             self.api_key_validated = False
             self.api_key_checked_date = None
+            self.default_requested_date = default_free_plan_date()
 
         def compose(self) -> ComposeResult:
             yield Header()
@@ -53,7 +54,7 @@ def run_tui() -> int:
                 yield Input(placeholder="J-Quants API key", password=True, id="api-key")
                 yield Button("認証", id="validate-key", variant="success")
             with Horizontal(id="controls"):
-                yield Input(placeholder="YYYY-MM-DD", id="date")
+                yield Input(value=self.default_requested_date.isoformat(), placeholder="YYYY-MM-DD", id="date")
                 yield Input(value=str(DEFAULT_TOP_N), placeholder="Top数", id="top")
                 yield Button("取得", id="fetch", variant="primary")
                 yield Button("CSV保存", id="save")

@@ -20,3 +20,6 @@ def parse_date(value: str) -> date:
     except ValueError as exc:
         raise ValueError("date must be in YYYY-MM-DD format.") from exc
 
+
+def default_free_plan_date(today: date | None = None) -> date:
+    return (today or today_jst()) - timedelta(weeks=12)
