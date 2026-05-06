@@ -2,9 +2,9 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from .config import load_api_key, require_api_key
+from .config import load_api_key
 from .dates import parse_date
-from .jquants import build_clients
+from .jquants import build_clients, validate_api_key
 from .output import write_csv
 from .ranking import DEFAULT_LOOKBACK_DAYS, DEFAULT_MAX_SEARCH_DAYS, DEFAULT_TOP_N, RankingRow, collect_ranking
 
@@ -22,6 +22,7 @@ def run_tui() -> int:
         CSS = """
         Screen { layout: vertical; }
         #intro { padding: 1 2; height: 7; }
+        #api-key-panel { height: 5; padding: 1 2; }
         #controls { height: 5; padding: 1 2; }
         #status { height: 2; padding: 0 2; }
         DataTable { height: 1fr; }
@@ -35,6 +36,10 @@ def run_tui() -> int:
             super().__init__()
             self.rows: list[RankingRow] = []
             self.current_requested_date = ""
+            self.api_key: str | None = None
+            self.api_key_source = "missing"
+            self.api_key_validated = False
+            self.api_key_checked_date = None
 
         def compose(self) -> ComposeResult:
             yield Header()
@@ -43,7 +48,10 @@ def run_tui() -> int:
                 yield Static(
                     "指定日とTop数を入力して取得してください。価格は調整後終値 AdjC を使います。"
                 )
-                yield Static(self.initial_key_status())
+                yield Static("", id="key-status")
+            with Horizontal(id="api-key-panel"):
+                yield Input(placeholder="J-Quants API key", password=True, id="api-key")
+                yield Button("認証", id="validate-key", variant="success")
             with Horizontal(id="controls"):
                 yield Input(placeholder="YYYY-MM-DD", id="date")
                 yield Input(value=str(DEFAULT_TOP_N), placeholder="Top数", id="top")
@@ -57,6 +65,7 @@ def run_tui() -> int:
         def on_mount(self) -> None:
             table = self.query_one("#table", DataTable)
             table.add_columns("順位", "コード", "銘柄名", "市場", "1年前終値", "指定日終値", "上昇額", "上昇率%")
+            self.load_initial_api_key()
 
         def on_button_pressed(self, event: Button.Pressed) -> None:
             if event.button.id == "fetch":
@@ -65,18 +74,55 @@ def run_tui() -> int:
                 self.save_csv()
             elif event.button.id == "quit":
                 self.exit()
+            elif event.button.id == "validate-key":
+                self.validate_key_from_input()
 
         def action_save_csv(self) -> None:
             self.save_csv()
 
-        def initial_key_status(self) -> str:
+        def load_initial_api_key(self) -> None:
             key = load_api_key()
             if key.api_key:
-                return f"APIキー: {key.source}"
-            return "APIキー: 未設定。取得時に非表示入力で求めます。保存する場合は jrr config set-api-key を使ってください。"
+                self.api_key = key.api_key
+                self.api_key_source = key.source
+                self.query_one("#api-key-panel").display = False
+                self.set_key_status(f"APIキー: {key.source} / 未認証。取得前に認証します。")
+                return
+            self.set_key_status("APIキー: 未設定。入力して認証してください。保存はしません。")
 
         def set_status(self, message: str) -> None:
             self.query_one("#status", Static).update(message)
+
+        def set_key_status(self, message: str) -> None:
+            self.query_one("#key-status", Static).update(message)
+
+        def validate_key_from_input(self) -> None:
+            api_key = self.query_one("#api-key", Input).value.strip()
+            if not api_key:
+                self.set_key_status("APIキーを入力してください。")
+                return
+            self.validate_and_store_api_key(api_key, source="tui")
+
+        def validate_and_store_api_key(self, api_key: str, source: str) -> bool:
+            try:
+                self.set_key_status("APIキー認証中...")
+                checked_date = validate_api_key(api_key)
+            except Exception as exc:
+                self.api_key_validated = False
+                self.set_key_status(f"APIキー認証エラー: {exc}")
+                if source != "tui":
+                    self.api_key = None
+                    self.api_key_source = "missing"
+                    self.query_one("#api-key-panel").display = True
+                return False
+            self.api_key = api_key
+            self.api_key_source = source
+            self.api_key_validated = True
+            self.api_key_checked_date = checked_date
+            self.query_one("#api-key", Input).value = ""
+            self.query_one("#api-key-panel").display = False
+            self.set_key_status(f"APIキー認証OK / 確認日 {checked_date.isoformat()}")
+            return True
 
         def fetch(self) -> None:
             try:
@@ -92,9 +138,15 @@ def run_tui() -> int:
                 return
 
             try:
+                if not self.api_key:
+                    self.set_status("先にAPIキーを入力して認証してください。")
+                    self.query_one("#api-key-panel").display = True
+                    return
+                if not self.api_key_validated and not self.validate_and_store_api_key(self.api_key, self.api_key_source):
+                    self.set_status("APIキー認証に失敗しました。APIキーを入力し直してください。")
+                    return
                 self.set_status("取得中...")
-                key = require_api_key(save=False)
-                bars_client, master_client = build_clients(key.api_key or "")
+                bars_client, master_client = build_clients(self.api_key)
                 self.rows = collect_ranking(
                     bars_client=bars_client,
                     master_client=master_client,
@@ -144,4 +196,3 @@ def run_tui() -> int:
 
     ReturnRankingApp().run()
     return 0
-

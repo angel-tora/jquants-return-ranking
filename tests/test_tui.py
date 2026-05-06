@@ -13,7 +13,14 @@ class TuiTests(unittest.TestCase):
 
         self.assertEqual(code, 1)
 
+    def test_tui_source_mentions_api_key_authentication(self):
+        with open(tui.__file__, encoding="utf-8") as handle:
+            source = handle.read()
+
+        self.assertIn("APIキー認証OK", source)
+        self.assertIn("api-key-panel", source)
+        self.assertIn("validate-key", source)
+
 
 if __name__ == "__main__":
     unittest.main()
-

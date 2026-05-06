@@ -36,6 +36,8 @@ jrr
 ```
 
 `jrr` opens the TUI. Enter a date and Top count, then fetch the ranking.
+If no API key is configured, enter it in the TUI and authenticate it first.
+The TUI uses the key only for the current session and does not save it.
 
 For one-shot terminal output:
 

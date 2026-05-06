@@ -2,11 +2,13 @@ from __future__ import annotations
 
 import json
 import time
-from datetime import date
+from datetime import date, timedelta
 from typing import Callable, Iterable
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
+
+from .dates import today_jst
 
 DAILY_BARS_URL = "https://api.jquants.com/v2/equities/bars/daily"
 EQUITIES_MASTER_URL = "https://api.jquants.com/v2/equities/master"
@@ -103,6 +105,36 @@ def build_clients(api_key: str, max_calls_per_minute: int = 60, request_timeout_
     )
 
 
+def validate_api_key(
+    api_key: str,
+    target_date: date | None = None,
+    max_search_days: int = 31,
+    request_timeout_seconds: float = 30.0,
+) -> date:
+    if not api_key.strip():
+        raise ValueError("API key must not be empty.")
+    if max_search_days < 0:
+        raise ValueError("max_search_days must be non-negative.")
+    target_date = target_date or (today_jst() - timedelta(weeks=12))
+    master_client = JQuantsClient(
+        api_key=api_key,
+        base_url=EQUITIES_MASTER_URL,
+        request_timeout_seconds=request_timeout_seconds,
+    )
+    last_error: Exception | None = None
+    for offset in range(max_search_days + 1):
+        checked_date = target_date - timedelta(days=offset)
+        try:
+            rows = fetch_master(master_client, checked_date)
+            if rows:
+                return checked_date
+        except Exception as exc:
+            last_error = exc
+    if last_error is not None:
+        raise RuntimeError(f"API key validation failed: {last_error}") from last_error
+    raise RuntimeError("API key validation failed: no issue metadata returned.")
+
+
 def fetch_daily_bars(client: JQuantsClient, target_date: date) -> list[dict]:
     return fetch_paginated_rows(client, target_date, ("daily_quotes", "bars", "data", "items", "results"))
 
@@ -177,4 +209,3 @@ def _read_error_body(exc: HTTPError) -> str:
     if isinstance(payload, dict) and payload.get("message"):
         return str(payload["message"])
     return json.dumps(payload, ensure_ascii=False)
-
