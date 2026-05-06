@@ -9,6 +9,7 @@ from .dates import parse_date, today_jst
 from .jquants import build_clients
 from .output import print_table, write_csv
 from .ranking import DEFAULT_LOOKBACK_DAYS, DEFAULT_MAX_SEARCH_DAYS, DEFAULT_TOP_N, collect_ranking
+from .security import sanitize_text
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -26,7 +27,7 @@ def main(argv: list[str] | None = None) -> int:
         print("Interrupted.", file=sys.stderr)
         return 130
     except Exception as exc:
-        print(f"error: {exc}", file=sys.stderr)
+        print(f"error: {sanitize_text(exc)}", file=sys.stderr)
         return 1
 
 
@@ -92,6 +93,7 @@ def cmd_rank(args: argparse.Namespace) -> int:
 
 
 def cmd_config_set_api_key(args: argparse.Namespace) -> int:
+    print("APIキーをローカル設定ファイルに保存します。キー本体は表示しません。")
     path = prompt_and_save_api_key()
     print(f"APIキーを保存しました: {path}")
     return 0

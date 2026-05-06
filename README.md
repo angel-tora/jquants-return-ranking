@@ -72,6 +72,13 @@ Lookup order:
 The saved config file lives in the OS-standard config directory for
 `jquants-return-ranking`.
 
+Security notes:
+
+- Do not paste real API keys into GitHub issues, screenshots, logs, or test fixtures.
+- TUI key input is session-only and is not written to disk.
+- `jrr config set-api-key` and `jrr rank --save-api-key` intentionally write a local config file. Use `JQUANTS_API_KEY` instead if you do not want a saved file.
+- Saved config files are written with user-only permissions where the OS supports it.
+
 ## Notes
 
 - This tool uses J-Quants v2 endpoints.

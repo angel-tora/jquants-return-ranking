@@ -7,6 +7,7 @@ from .dates import default_free_plan_date, parse_date
 from .jquants import build_clients, validate_api_key
 from .output import write_csv
 from .ranking import DEFAULT_LOOKBACK_DAYS, DEFAULT_MAX_SEARCH_DAYS, DEFAULT_TOP_N, RankingRow, collect_ranking
+from .security import sanitize_text
 
 
 def run_tui() -> int:
@@ -110,7 +111,7 @@ def run_tui() -> int:
                 checked_date = validate_api_key(api_key)
             except Exception as exc:
                 self.api_key_validated = False
-                self.set_key_status(f"APIキー認証エラー: {exc}")
+                self.set_key_status(f"APIキー認証エラー: {sanitize_text(exc, (api_key, self.api_key))}")
                 if source != "tui":
                     self.api_key = None
                     self.api_key_source = "missing"
@@ -166,7 +167,7 @@ def run_tui() -> int:
                 else:
                     self.set_status("該当する銘柄がありません。")
             except Exception as exc:
-                self.set_status(f"取得エラー: {exc}")
+                self.set_status(f"取得エラー: {sanitize_text(exc, (self.api_key,))}")
 
         def render_rows(self) -> None:
             table = self.query_one("#table", DataTable)
@@ -193,7 +194,7 @@ def run_tui() -> int:
                 write_csv(self.rows, path)
                 self.set_status(f"CSV保存: {path}")
             except Exception as exc:
-                self.set_status(f"保存エラー: {exc}")
+                self.set_status(f"保存エラー: {sanitize_text(exc, (self.api_key,))}")
 
     ReturnRankingApp().run()
     return 0

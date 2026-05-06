@@ -9,6 +9,7 @@ from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 
 from .dates import default_free_plan_date
+from .security import sanitize_text
 
 DAILY_BARS_URL = "https://api.jquants.com/v2/equities/bars/daily"
 EQUITIES_MASTER_URL = "https://api.jquants.com/v2/equities/master"
@@ -81,13 +82,14 @@ class JQuantsClient:
                     self.sleep_func(_backoff_seconds(exc, attempt))
                     attempt += 1
                     continue
-                raise RuntimeError(f"J-Quants API request failed with HTTP {exc.code}: {_read_error_body(exc)}") from exc
+                body = _read_error_body(exc, secrets=(self.api_key,))
+                raise RuntimeError(f"J-Quants API request failed with HTTP {exc.code}: {body}") from exc
             except URLError as exc:
                 if attempt < self.max_retries:
                     self.sleep_func(max(1.0, 2**attempt))
                     attempt += 1
                     continue
-                raise RuntimeError(f"J-Quants API request failed: {exc}") from exc
+                raise RuntimeError(f"J-Quants API request failed: {sanitize_text(exc, (self.api_key,))}") from exc
 
     def _open_request(self, request: Request):
         if self.opener is urlopen:
@@ -131,7 +133,7 @@ def validate_api_key(
         except Exception as exc:
             last_error = exc
     if last_error is not None:
-        raise RuntimeError(f"API key validation failed: {last_error}") from last_error
+        raise RuntimeError(f"API key validation failed: {sanitize_text(last_error, (api_key,))}") from last_error
     raise RuntimeError("API key validation failed: no issue metadata returned.")
 
 
@@ -195,17 +197,18 @@ def _backoff_seconds(exc: HTTPError, attempt: int) -> float:
     return max(1.0, 2**attempt)
 
 
-def _read_error_body(exc: HTTPError) -> str:
+def _read_error_body(exc: HTTPError, secrets: Iterable[str | None] = ()) -> str:
     try:
         raw = exc.read()
     except Exception:
         raw = b""
     if not raw:
-        return exc.reason or "no response body"
+        return sanitize_text(exc.reason or "no response body", secrets)
     try:
         payload = json.loads(raw.decode("utf-8"))
     except Exception:
-        return raw.decode("utf-8", errors="replace").strip() or (exc.reason or "unknown error")
+        message = raw.decode("utf-8", errors="replace").strip() or (exc.reason or "unknown error")
+        return sanitize_text(message, secrets)
     if isinstance(payload, dict) and payload.get("message"):
-        return str(payload["message"])
-    return json.dumps(payload, ensure_ascii=False)
+        return sanitize_text(payload["message"], secrets)
+    return sanitize_text(json.dumps(payload, ensure_ascii=False), secrets)

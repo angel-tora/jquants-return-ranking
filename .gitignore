@@ -10,4 +10,6 @@ __pycache__/
 *.csv
 *.html
 .env
-
+*.log
+*.toml.local
+ranking_*.csv

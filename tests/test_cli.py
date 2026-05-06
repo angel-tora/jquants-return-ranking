@@ -46,6 +46,16 @@ class CliTests(unittest.TestCase):
         collect.assert_called_once()
         print_table.assert_called_once_with([fake_row])
 
+    def test_main_sanitizes_errors(self):
+        err = io.StringIO()
+        with patch.object(cli, "cmd_config_show", side_effect=RuntimeError("api_key = secret-token")):
+            with contextlib.redirect_stderr(err):
+                code = cli.main(["config", "show"])
+
+        self.assertEqual(code, 1)
+        self.assertNotIn("secret-token", err.getvalue())
+        self.assertIn("[REDACTED]", err.getvalue())
+
 
 if __name__ == "__main__":
     unittest.main()

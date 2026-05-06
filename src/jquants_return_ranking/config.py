@@ -96,6 +96,10 @@ def save_api_key(api_key: str, path: Path | None = None) -> Path:
         raise ValueError("API key must not be empty.")
     path = path or config_path()
     path.parent.mkdir(parents=True, exist_ok=True)
+    try:
+        path.parent.chmod(stat.S_IRWXU)
+    except OSError:
+        pass
     path.write_text("[jquants]\n" f'api_key = "{_toml_escape(api_key)}"\n', encoding="utf-8")
     try:
         path.chmod(stat.S_IRUSR | stat.S_IWUSR)
@@ -110,4 +114,3 @@ def prompt_and_save_api_key(path: Path | None = None) -> Path:
 
 def _toml_escape(value: str) -> str:
     return value.replace("\\", "\\\\").replace('"', '\\"')
-

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import stat
 import tempfile
 import unittest
 from pathlib import Path
@@ -41,7 +42,14 @@ class ConfigTests(unittest.TestCase):
             self.assertEqual(key.source, "prompt_saved")
             self.assertTrue(path.exists())
 
+    def test_save_api_key_limits_file_and_directory_permissions(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            path = Path(tmpdir) / "nested" / "config.toml"
+            save_api_key("saved", path)
+
+            self.assertEqual(stat.S_IMODE(path.parent.stat().st_mode), stat.S_IRWXU)
+            self.assertEqual(stat.S_IMODE(path.stat().st_mode), stat.S_IRUSR | stat.S_IWUSR)
+
 
 if __name__ == "__main__":
     unittest.main()
-
