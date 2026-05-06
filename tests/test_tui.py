@@ -26,6 +26,10 @@ class TuiTests(unittest.TestCase):
             source = handle.read()
 
         self.assertIn("default_free_plan_date", source)
+        self.assertIn("date-panel", source)
+        self.assertIn('id="year"', source)
+        self.assertIn('id="month"', source)
+        self.assertIn('id="day"', source)
         self.assertIn("date-month-minus", source)
         self.assertIn("date-month-plus", source)
         self.assertIn("date-day-minus", source)
