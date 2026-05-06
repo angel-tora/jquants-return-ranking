@@ -1,0 +1,70 @@
+# jquants-return-ranking
+
+`jrr` shows the top 50 Japanese stocks by one-year price return using J-Quants v2 data.
+
+The default output is a Japanese terminal table with:
+
+- 順位
+- コード
+- 銘柄名
+- 市場
+- 1年前終値
+- 指定日終値
+- 上昇額
+- 上昇率%
+
+Prices are calculated with adjusted close (`AdjC`) so stock splits are handled more naturally.
+
+## Install
+
+```bash
+pipx install jquants-return-ranking
+```
+
+Local development:
+
+```bash
+python -m venv .venv
+. .venv/bin/activate
+pip install -e .
+```
+
+## Usage
+
+```bash
+jrr rank --date 2026-05-01
+```
+
+If an API key is not found, `jrr` asks for it in the terminal without echoing.
+The key is not saved unless you explicitly request it.
+
+```bash
+jrr rank --date 2026-05-01 --save-api-key
+jrr config set-api-key
+jrr config show
+```
+
+Save CSV only when needed:
+
+```bash
+jrr rank --date 2026-05-01 --output ranking.csv
+```
+
+## API Key
+
+Lookup order:
+
+1. `JQUANTS_API_KEY`
+2. saved config file
+3. hidden terminal prompt
+
+The saved config file lives in the OS-standard config directory for
+`jquants-return-ranking`.
+
+## Notes
+
+- This tool uses J-Quants v2 endpoints.
+- Market data is fetched on the user's machine with the user's own API key.
+- No real market data is bundled in this repository.
+- This is not investment advice.
+
