@@ -49,6 +49,8 @@ python -m pip install -e .
 jrr
 ```
 
+`git clone` only downloads the source code. Install the package with `python -m pip install -e .` before running `jrr`.
+
 Windows cmd.exe:
 
 ```bat
