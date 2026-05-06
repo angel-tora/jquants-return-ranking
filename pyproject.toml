@@ -10,7 +10,10 @@ readme = "README.md"
 requires-python = ">=3.11"
 license = "MIT"
 authors = [{ name = "jquants-return-ranking contributors" }]
-dependencies = ["platformdirs>=4.0"]
+dependencies = [
+  "platformdirs>=4.0",
+  "textual>=0.80",
+]
 keywords = ["jquants", "stocks", "ranking", "japan", "returns"]
 classifiers = [
   "Development Status :: 3 - Alpha",
@@ -27,4 +30,3 @@ jrr = "jquants_return_ranking.cli:main"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/jquants_return_ranking"]
-

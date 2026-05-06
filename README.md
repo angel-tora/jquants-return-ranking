@@ -32,6 +32,14 @@ pip install -e .
 ## Usage
 
 ```bash
+jrr
+```
+
+`jrr` opens the TUI. Enter a date and Top count, then fetch the ranking.
+
+For one-shot terminal output:
+
+```bash
 jrr rank --date 2026-05-01
 ```
 
@@ -67,4 +75,3 @@ The saved config file lives in the OS-standard config directory for
 - Market data is fetched on the user's machine with the user's own API key.
 - No real market data is bundled in this repository.
 - This is not investment advice.
-

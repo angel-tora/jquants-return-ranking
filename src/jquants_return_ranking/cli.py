@@ -12,6 +12,12 @@ from .ranking import DEFAULT_LOOKBACK_DAYS, DEFAULT_MAX_SEARCH_DAYS, DEFAULT_TOP
 
 
 def main(argv: list[str] | None = None) -> int:
+    if argv is None:
+        argv = sys.argv[1:]
+    if not argv:
+        from .tui import run_tui
+
+        return run_tui()
     parser = build_parser()
     args = parser.parse_args(argv)
     try:
@@ -25,7 +31,10 @@ def main(argv: list[str] | None = None) -> int:
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(prog="jrr", description="J-Quants 1年株価上昇ランキングCLI")
+    parser = argparse.ArgumentParser(
+        prog="jrr",
+        description="J-Quants 1年株価上昇ランキングCLI。引数なしの `jrr` でTUIを起動します。",
+    )
     subparsers = parser.add_subparsers(dest="command", required=True)
 
     rank = subparsers.add_parser("rank", help="指定日から過去1年の上昇率ランキングを表示します。")
@@ -95,4 +104,3 @@ def cmd_config_show(args: argparse.Namespace) -> int:
     print(f"api_key_source={key.source}")
     print(f"env_name={API_KEY_ENV}")
     return 0
-
