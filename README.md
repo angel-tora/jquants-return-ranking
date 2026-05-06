@@ -38,8 +38,6 @@ jrr
 `jrr` opens the TUI. Enter a date and Top count, then fetch the ranking.
 If no API key is configured, enter it in the TUI and authenticate it first.
 The TUI uses the key only for the current session and does not save it.
-The date field starts at 12 weeks before today for free-plan compatibility.
-Use the month/day panel buttons to adjust it without typing the full date.
 
 For one-shot terminal output:
 

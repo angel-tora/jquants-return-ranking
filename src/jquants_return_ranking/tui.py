@@ -1,10 +1,9 @@
 from __future__ import annotations
 
-from datetime import date, timedelta
 from pathlib import Path
 
 from .config import load_api_key
-from .dates import add_months_clamped, default_free_plan_date
+from .dates import parse_date
 from .jquants import build_clients, validate_api_key
 from .output import write_csv
 from .ranking import DEFAULT_LOOKBACK_DAYS, DEFAULT_MAX_SEARCH_DAYS, DEFAULT_TOP_N, RankingRow, collect_ranking
@@ -24,18 +23,11 @@ def run_tui() -> int:
         Screen { layout: vertical; }
         #intro { padding: 1 2; height: 7; }
         #api-key-panel { height: 5; padding: 1 2; }
-        #controls { height: 13; padding: 1 2; }
-        #date-panel { height: 8; border: round $primary; padding: 1 2; }
-        #date-heading { height: 1; }
-        #date-values { height: 3; }
-        #date-buttons { height: 3; }
-        #action-controls { height: 3; }
+        #controls { height: 5; padding: 1 2; }
         #status { height: 2; padding: 0 2; }
         DataTable { height: 1fr; }
-        #month, #day { width: 8; }
-        #top { width: 18; }
-        Button { width: 10; }
-        .date-cell { width: 10; text-align: center; }
+        Input { width: 24; }
+        Button { width: 14; }
         """
 
         BINDINGS = [("q", "quit", "終了"), ("s", "save_csv", "CSV保存")]
@@ -48,7 +40,6 @@ def run_tui() -> int:
             self.api_key_source = "missing"
             self.api_key_validated = False
             self.api_key_checked_date = None
-            self.default_requested_date = default_free_plan_date()
 
         def compose(self) -> ComposeResult:
             yield Header()
@@ -61,28 +52,12 @@ def run_tui() -> int:
             with Horizontal(id="api-key-panel"):
                 yield Input(placeholder="J-Quants API key", password=True, id="api-key")
                 yield Button("認証", id="validate-key", variant="success")
-            with Vertical(id="controls"):
-                with Vertical(id="date-panel"):
-                    yield Static("指定日", id="date-title")
-                    with Horizontal(id="date-heading"):
-                        yield Static("年", classes="date-cell")
-                        yield Static("月", classes="date-cell")
-                        yield Static("日", classes="date-cell")
-                    with Horizontal(id="date-values"):
-                        yield Static(str(self.default_requested_date.year), id="year", classes="date-cell")
-                        yield Input(value=f"{self.default_requested_date.month:02d}", placeholder="MM", id="month")
-                        yield Input(value=f"{self.default_requested_date.day:02d}", placeholder="DD", id="day")
-                    with Horizontal(id="date-buttons"):
-                        yield Static("", classes="date-cell")
-                        yield Button("月-", id="date-month-minus")
-                        yield Button("月+", id="date-month-plus")
-                        yield Button("日-", id="date-day-minus")
-                        yield Button("日+", id="date-day-plus")
-                with Horizontal(id="action-controls"):
-                    yield Input(value=str(DEFAULT_TOP_N), placeholder="Top数", id="top")
-                    yield Button("取得", id="fetch", variant="primary")
-                    yield Button("CSV保存", id="save")
-                    yield Button("終了", id="quit")
+            with Horizontal(id="controls"):
+                yield Input(placeholder="YYYY-MM-DD", id="date")
+                yield Input(value=str(DEFAULT_TOP_N), placeholder="Top数", id="top")
+                yield Button("取得", id="fetch", variant="primary")
+                yield Button("CSV保存", id="save")
+                yield Button("終了", id="quit")
             yield Static("Ready", id="status")
             yield DataTable(id="table")
             yield Footer()
@@ -101,14 +76,6 @@ def run_tui() -> int:
                 self.exit()
             elif event.button.id == "validate-key":
                 self.validate_key_from_input()
-            elif event.button.id == "date-month-minus":
-                self.adjust_date(months=-1)
-            elif event.button.id == "date-month-plus":
-                self.adjust_date(months=1)
-            elif event.button.id == "date-day-minus":
-                self.adjust_date(days=-1)
-            elif event.button.id == "date-day-plus":
-                self.adjust_date(days=1)
 
         def action_save_csv(self) -> None:
             self.save_csv()
@@ -128,30 +95,6 @@ def run_tui() -> int:
 
         def set_key_status(self, message: str) -> None:
             self.query_one("#key-status", Static).update(message)
-
-        def adjust_date(self, months: int = 0, days: int = 0) -> None:
-            try:
-                current_date = self.current_selected_date()
-            except Exception:
-                self.set_selected_date(self.default_requested_date)
-                self.set_status(f"日付が不正だったため初期値 {self.default_requested_date.isoformat()} に戻しました。")
-                return
-            if months:
-                current_date = add_months_clamped(current_date, months)
-            if days:
-                current_date = current_date + timedelta(days=days)
-            self.set_selected_date(current_date)
-
-        def current_selected_date(self) -> date:
-            year = int(str(self.query_one("#year", Static).renderable))
-            month = int(self.query_one("#month", Input).value.strip())
-            day = int(self.query_one("#day", Input).value.strip())
-            return date(year, month, day)
-
-        def set_selected_date(self, value: date) -> None:
-            self.query_one("#year", Static).update(str(value.year))
-            self.query_one("#month", Input).value = f"{value.month:02d}"
-            self.query_one("#day", Input).value = f"{value.day:02d}"
 
         def validate_key_from_input(self) -> None:
             api_key = self.query_one("#api-key", Input).value.strip()
@@ -183,7 +126,10 @@ def run_tui() -> int:
 
         def fetch(self) -> None:
             try:
-                requested_date = self.current_selected_date()
+                requested_date_text = self.query_one("#date", Input).value.strip()
+                if not requested_date_text:
+                    raise ValueError("指定日を YYYY-MM-DD で入力してください。")
+                requested_date = parse_date(requested_date_text)
                 top_n = int(self.query_one("#top", Input).value.strip() or str(DEFAULT_TOP_N))
                 if top_n <= 0:
                     raise ValueError("Top数は1以上にしてください。")

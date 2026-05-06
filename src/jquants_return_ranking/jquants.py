@@ -8,7 +8,7 @@ from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 
-from .dates import default_free_plan_date
+from .dates import today_jst
 
 DAILY_BARS_URL = "https://api.jquants.com/v2/equities/bars/daily"
 EQUITIES_MASTER_URL = "https://api.jquants.com/v2/equities/master"
@@ -115,7 +115,7 @@ def validate_api_key(
         raise ValueError("API key must not be empty.")
     if max_search_days < 0:
         raise ValueError("max_search_days must be non-negative.")
-    target_date = target_date or default_free_plan_date()
+    target_date = target_date or (today_jst() - timedelta(weeks=12))
     master_client = JQuantsClient(
         api_key=api_key,
         base_url=EQUITIES_MASTER_URL,
